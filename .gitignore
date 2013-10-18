@@ -1,0 +1,3 @@
+*.o
+test/genpool_test
+*.exe
