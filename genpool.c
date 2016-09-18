@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------
-Copyright (c) 2013 Gauthier Östervall
+Copyright (c) 2016 Gauthier Östervall
 ----------------------------------------------------------------------------*/
 #include <assert.h>
 #include <malloc.h>
@@ -14,6 +14,9 @@ struct genpool {
     genome_t **individuals;
     double mutation_rate;
     int nb_genomes;
+    int fight_size;     //< Number of individuals fighting each other
+    int nb_victors;
+    int (*fitness)(genome_t *candidate1, genome_t *candidate2);
 };
 
 //******************************************************************************
@@ -38,14 +41,23 @@ struct genpool {
 /// \return Pointer to the newly generated pool.
 //  ----------------------------------------------------------------------------
 struct genpool *genpool_create(const int nb_individuals,
-                               const double mutation_rate)
+                               const double mutation_rate,
+                               const int fight_size,
+                               const int nb_victors,
+                               int (* const fitness)(genome_t const *candidate1,
+                                                     genome_t const *candidate2)
+    )
 {
+    assert(nb_victors * 2 == fight_size);
+
     struct genpool *pool = malloc(sizeof(struct genpool));
     if (!pool)
         return NULL;
 
     pool->nb_genomes = nb_individuals;
     pool->mutation_rate = mutation_rate;
+    pool->fight_size = fight_size;
+    pool->nb_victors = nb_victors;
 
     pool->individuals = malloc(nb_individuals * sizeof (*pool->individuals));
     if (!pool->individuals) {
@@ -64,6 +76,11 @@ struct genpool *genpool_create(const int nb_individuals,
         }
     }
     return pool;
+}
+
+void genpool_round_run(int (*fitness)(genome_t const *candidate1,
+                                      genome_t const *candidate2))
+{
 }
 
 void genpool_destroy(struct genpool **genpool)
