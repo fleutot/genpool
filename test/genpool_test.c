@@ -50,10 +50,10 @@ static void test_genpool_create(void)
 {
     TEST_START_PRINT();
 
-    genpool_create(100);
+    struct genpool *gp = genpool_create(100, 0.1);
 
     // This test is not automatic. Run with e.g. valgrind to see if all memory
     // is freed.
-    genpool_destroy();
+    genpool_destroy(&gp);
     TEST_END_PRINT();
 }
