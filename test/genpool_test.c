@@ -26,6 +26,10 @@ Copyright (c) 2013 Gauthier Östervall
 //******************************************************************************
 // Module constants
 //******************************************************************************
+#define POOL_SIZE (100)
+#define MUTATION_RATE (0.1)
+#define FIGHT_SIZE (4)
+#define NB_VICTORS (2)
 
 //******************************************************************************
 // Module variables
@@ -53,10 +57,21 @@ static void test_genpool_create(void)
 {
     TEST_START_PRINT();
 
-    struct genpool *gp = genpool_create(100, 0.1, 4, 2, fitness);
+    struct genpool *gp = genpool_create(POOL_SIZE, MUTATION_RATE, FIGHT_SIZE,
+                                        NB_VICTORS, fitness);
 
     // This test is not automatic. Run with e.g. valgrind to see if all memory
     // is freed.
+    genpool_destroy(&gp);
+    TEST_END_PRINT();
+}
+
+static void test_genpool_round_run(void)
+{
+    TEST_START_PRINT();
+    struct genpool *gp = genpool_create(POOL_SIZE, MUTATION_RATE, FIGHT_SIZE,
+                                        NB_VICTORS, fitness);
+
     genpool_destroy(&gp);
     TEST_END_PRINT();
 }

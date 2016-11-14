@@ -16,7 +16,11 @@ struct genpool {
     int nb_genomes;
     int fight_size;     //< Number of individuals fighting each other
     int nb_victors;
-    int (*fitness)(genome_t *candidate1, genome_t *candidate2);
+    int (*fitness)(genome_t const *candidate1, genome_t const *candidate2);
+
+    // Array of randomly ordered indexes of individuals. Rerandomized at each
+    // evolution step.
+    int *fight_order;
 };
 
 //******************************************************************************
@@ -58,9 +62,18 @@ struct genpool *genpool_create(const int nb_individuals,
     pool->mutation_rate = mutation_rate;
     pool->fight_size = fight_size;
     pool->nb_victors = nb_victors;
+    pool->fitness = fitness;
+
+    pool->fight_order = malloc(nb_individuals * sizeof (*pool->fight_order));
+    if (!pool->fight_order) {
+        perror("malloc for fight_order");
+        return NULL;
+    }
 
     pool->individuals = malloc(nb_individuals * sizeof (*pool->individuals));
     if (!pool->individuals) {
+        perror("malloc for individuals");
+        free(pool->fight_order);
         free(pool);
         return NULL;
     }
@@ -70,6 +83,7 @@ struct genpool *genpool_create(const int nb_individuals,
         if (!pool->individuals[i]) {
             for (int j = 0; j < i; j++)
                 genome_destroy(&pool->individuals[j]);
+            free(pool->fight_order);
             free(pool->individuals);
             free(pool);
             return NULL;
@@ -78,9 +92,12 @@ struct genpool *genpool_create(const int nb_individuals,
     return pool;
 }
 
-void genpool_round_run(int (*fitness)(genome_t const *candidate1,
-                                      genome_t const *candidate2))
+int genpool_round_run(struct genpool *gp)
 {
+    assert(gp);
+    assert(gp->fight_order);
+
+    return 0;
 }
 
 void genpool_destroy(struct genpool **genpool)
@@ -90,6 +107,7 @@ void genpool_destroy(struct genpool **genpool)
     for (int i = 0; i < gp->nb_genomes; i++) {
         genome_destroy(&gp->individuals[i]);
     }
+    free(gp->fight_order);
     free(gp->individuals);
     free(gp);
     *genpool = NULL;

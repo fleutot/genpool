@@ -28,7 +28,6 @@ void genpool_mutation_rate_set(struct genpool *gp,
 
 void genpool_destroy(struct genpool **gp);
 
-void genpool_round_run(int (*fitness)(genome_t const *candidate1,
-                                      genome_t const *candidate2));
+int genpool_round_run(struct genpool *gp);
 
 #endif // GENPOOL_H_INCLUDED
