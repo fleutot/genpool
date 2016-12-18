@@ -6,6 +6,7 @@ Copyright (c) 2016 Gauthier Östervall
 
 #include "genpool.h"
 #include "genome/genome.h"
+#include "genome/randomizer.h"
 
 //******************************************************************************
 // Module types
@@ -21,6 +22,7 @@ struct genpool {
     // Array of randomly ordered indexes of individuals. Rerandomized at each
     // evolution step.
     int *fight_order;
+    int nb_fights_per_round;
 };
 
 //******************************************************************************
@@ -34,6 +36,11 @@ struct genpool {
 //******************************************************************************
 // Function prototypes
 //******************************************************************************
+static void fight_order_permute(struct genpool *gp);
+static int groups_fight(struct genpool *gp);
+static void group_fight(genome_t *inds, int nb_cand);
+static void group_kill_losers();
+static void fight(genome_t *, genome_t *,int  score_i, int score_j);
 
 //******************************************************************************
 // Function definitions
@@ -69,6 +76,11 @@ struct genpool *genpool_create(const int nb_individuals,
         perror("malloc for fight_order");
         return NULL;
     }
+    for (int i = 0; i < nb_individuals; ++i) {
+        pool->fight_order[i] = i; // order does not matter, going to be permuted
+    }
+
+    pool->nb_fights_per_round = nb_individuals / fight_size;
 
     pool->individuals = malloc(nb_individuals * sizeof (*pool->individuals));
     if (!pool->individuals) {
@@ -97,7 +109,10 @@ int genpool_round_run(struct genpool *gp)
     assert(gp);
     assert(gp->fight_order);
 
-    return 0;
+    fight_order_permute(gp);
+    groups_fight(gp);
+
+    return -1;
 }
 
 void genpool_destroy(struct genpool **genpool)
@@ -127,3 +142,64 @@ void genpool_mutation_rate_set(struct genpool *gp,
 //******************************************************************************
 // Internal functions
 //******************************************************************************
+static void fight_order_permute(struct genpool *gp)
+{
+    // Fisher-Yates shuffle
+    for (int i = gp->nb_genomes - 1; i >= 0; --i) {
+        int swap_pos = random_get(i + 1);
+        int tmp = gp->fight_order[swap_pos];
+        gp->fight_order[swap_pos] = gp->fight_order[i];
+        gp->fight_order[i] = tmp;
+    }
+}
+
+static int groups_fight(struct genpool *gp)
+{
+    for (int fight_n = 0, group_i = 0;
+         fight_n < gp->nb_fights_per_round;
+         ++fight_n, group_i += gp->fight_size
+        ) {
+        genome_t **losers = malloc(gp->nb_victors * sizeof (*losers));
+        if (!losers) {
+            perror("malloc for losers");
+            return -1;
+        }
+        genome_t **winners = malloc(gp->nb_victors * sizeof (*winners));
+        if (!winners) {
+            perror("malloc for winners");
+            free(losers);
+            return -1;
+        }
+
+        group_fight(gp->individuals[gp->fight_order[group_i]], gp->fight_size);
+                    //gp->individuals[gp->fight_order[group_i + 1]],
+                    //gp->individuals[gp->fight_order[group_i + 2]],
+                    //gp->individuals[gp->fight_order[group_i + 3]]);
+        group_kill_losers();
+        group_mate_winners();
+    }
+    return 0;
+}
+
+static void group_fight(genome_t *ind[], int nb_cand, int scores[])
+{
+    for (int i = 0; i < nb_cand; ++i)
+        scores[i] = 0;
+
+    for (int i = 0; i < nb_cand; ++i) {
+        for (int j = i + 1; j < nb_cand; ++j) {
+            int score_i = 0, score_j = 0;
+            fight(ind[i], ind[j], score_i, score_j);
+            scores[i] += score_i;
+            scores[j] += score_j;
+        }
+    }
+}
+
+static void group_kill_losers()
+{
+}
+
+static void group_mate_winners()
+{
+}

@@ -39,6 +39,7 @@ Copyright (c) 2013 Gauthier Östervall
 // Function prototypes
 //******************************************************************************
 static void test_genpool_create(void);
+static void test_genpool_round_run(void);
 static int fitness(genome_t const *candidate1, genome_t const *candidate2);
 
 //******************************************************************************
@@ -47,6 +48,7 @@ static int fitness(genome_t const *candidate1, genome_t const *candidate2);
 int main(void)
 {
     test_genpool_create();
+    test_genpool_round_run();
     printf("All tests passed.\n");
 }
 
@@ -71,6 +73,8 @@ static void test_genpool_round_run(void)
     TEST_START_PRINT();
     struct genpool *gp = genpool_create(POOL_SIZE, MUTATION_RATE, FIGHT_SIZE,
                                         NB_VICTORS, fitness);
+
+    assert(genpool_round_run(gp) == 0);
 
     genpool_destroy(&gp);
     TEST_END_PRINT();
